@@ -1,0 +1,32 @@
+# .gitignore for Fusion-Jarvis
+
+# Environment secrets — NEVER commit!
+.env
+
+# Telethon session file (contains auth token)
+*.session
+*.session-journal
+
+# Memory persistence file
+fusion_jarvis_memory.json
+
+# Log files
+*.log
+
+# Notes directory (user data)
+notes/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
