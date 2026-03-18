@@ -115,10 +115,11 @@ class Brain:
             # Build the full message list for this LLM call
             messages = self._build_messages(memory, ephemeral_tool_messages)
 
-            # Call the LLM
+            # Call the LLM — always returns a string (error messages included)
             raw_response = await self._call_llm(messages)
 
-            if raw_response is None:
+            # Guard: if somehow empty, return immediately
+            if not raw_response:
                 return (
                     "❌ Xin lỗi, tôi gặp lỗi kết nối với AI. Vui lòng thử lại.\n"
                     "Sorry, I encountered a connection error. Please try again."
@@ -198,11 +199,41 @@ class Brain:
                 },
             )
             content = response.choices[0].message.content
+            # Guard: some providers return None content on edge cases
+            if not content or not content.strip():
+                logger.warning("[Brain] LLM returned empty content.")
+                return (
+                    "⚠️ AI trả về phản hồi rỗng. Vui lòng thử lại.\n"
+                    "The AI returned an empty response. Please try again."
+                )
             logger.debug("[Brain] LLM response (first 200 chars): %s", content[:200])
             return content
+
         except Exception as e:
-            logger.error("[Brain] LLM API call failed: %s", e)
-            return None
+            err_str = str(e)
+            logger.error("[Brain] LLM API call failed: %s", err_str)
+
+            # ── 429: Rate limit or quota exceeded ─────────────────────────
+            if "429" in err_str or "rate limit" in err_str.lower() or "quota" in err_str.lower():
+                return (
+                    "⚠️ **Hệ thống AI đang quá tải hoặc đã hết quota.**\n"
+                    "Vui lòng thử lại sau vài giây hoặc đổi model trong `.env`.\n\n"
+                    "⚠️ **The AI service is rate-limited or quota exceeded.**\n"
+                    "Please wait a moment and try again, or switch to a different model."
+                )
+            # ── 401: Invalid API key ───────────────────────────────────────
+            if "401" in err_str or "unauthorized" in err_str.lower() or "user not found" in err_str.lower():
+                return (
+                    "❌ **API Key không hợp lệ hoặc chưa được cấu hình.**\n"
+                    "Vui lòng kiểm tra `OPENROUTER_API_KEY` trong file `.env`.\n\n"
+                    "❌ **Invalid or missing API Key.**\n"
+                    "Please check `OPENROUTER_API_KEY` in your `.env` file."
+                )
+            # ── Generic network / unknown error ───────────────────────────
+            return (
+                "❌ Xin lỗi, tôi gặp lỗi kết nối với AI. Vui lòng thử lại.\n"
+                "Sorry, I encountered a connection error. Please try again."
+            )
 
     # ── Message Builder ────────────────────────────────────────────────────────
 

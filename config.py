@@ -59,7 +59,7 @@ class Config:
     # Examples: "anthropic/claude-3.5-sonnet", "google/gemini-pro", "openai/gpt-4o"
     DEFAULT_MODEL: str = field(
         default_factory=lambda: os.environ.get(
-            "DEFAULT_MODEL", "google/gemini-2.0-flash-001"
+            "DEFAULT_MODEL", "meta-llama/llama-3.3-70b-instruct:free"
         )
     )
     # Model used exclusively for summarizing memory (can be a cheaper/faster model)

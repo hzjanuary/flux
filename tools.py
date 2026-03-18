@@ -219,16 +219,20 @@ async def get_current_time() -> str:
 async def search_web(query: str, max_results: int = 5) -> str:
     """
     Searches the web via DuckDuckGo using the duckduckgo_search library.
+    Runs the sync DDGS client in a thread pool executor to avoid blocking
+    the async event loop.
     Returns real search results: title, URL, and a content snippet per result.
     """
     max_results = min(max_results, 10)
 
+    def _blocking_search() -> list:
+        """Synchronous search — safe to run inside an executor thread."""
+        with DDGS() as ddgs:
+            return ddgs.text(query, max_results=max_results)
+
     try:
-        async with DDGS() as ddgs:
-            raw_results = await ddgs.atext(
-                query,
-                max_results=max_results,
-            )
+        loop = asyncio.get_event_loop()
+        raw_results = await loop.run_in_executor(None, _blocking_search)
 
         if not raw_results:
             return (

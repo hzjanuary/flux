@@ -197,6 +197,7 @@ Done. The tool is **automatically** included in the system prompt and available 
 | Session file leakage | `*.session` files hold auth data — do not share or commit |
 | Shell command abuse | `run_shell_command` uses an **allowlist** — only safe read-only commands |
 | Prompt injection via files | `read_file` caps at **50KB** |
+| API errors exposed to users | `brain.py` catches 401/429 and returns friendly Vietnamese+English messages |
 
 ---
 
@@ -210,7 +211,7 @@ Done. The tool is **automatically** included in the system prompt and available 
 | `OPENROUTER_API_KEY` | Yes | — | OpenRouter API Key |
 | `TELEGRAM_PHONE` | No | `""` | Phone number (UserBot mode only, unused by default) |
 | `TELEGRAM_OWNER_ID` | No | `0` (public) | Restrict bot to a single Telegram User ID |
-| `DEFAULT_MODEL` | No | `google/gemini-2.0-flash-001` | Primary LLM model |
+| `DEFAULT_MODEL` | No | `meta-llama/llama-3.3-70b-instruct:free` | Primary LLM model |
 | `SUMMARIZER_MODEL` | No | `google/gemini-2.0-flash-001` | Memory summarization model |
 | `MAX_TOKENS` | No | `2048` | Maximum response token limit |
 | `SHORT_TERM_LIMIT` | No | `10` | Max messages in short-term memory before summarization |
@@ -227,7 +228,7 @@ Done. The tool is **automatically** included in the system prompt and available 
 | [openai](https://github.com/openai/openai-python) | OpenRouter-compatible async LLM SDK |
 | [python-dotenv](https://github.com/theskumar/python-dotenv) | Load environment variables from `.env` |
 | [psutil](https://github.com/giampaolo/psutil) | System information (CPU, RAM, disk) |
-| [duckduckgo-search](https://github.com/deedy5/duckduckgo_search) | Async real web search via DuckDuckGo |
+| [duckduckgo-search](https://github.com/deedy5/duckduckgo_search) | Web search via DuckDuckGo (runs in thread pool, non-blocking) |
 
 ---
 
