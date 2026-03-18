@@ -1,5 +1,5 @@
 """
-tools.py — Fusion-Jarvis Tool Registry
+tools.py — FluxClaw Tool Registry
 ========================================
 Defines all tools (Python functions) that the AI agent can call.
 

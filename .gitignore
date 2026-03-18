@@ -1,4 +1,4 @@
-# .gitignore for Fusion-Jarvis
+# .gitignore for FluxClaw
 
 # Environment secrets — NEVER commit!
 .env
@@ -8,7 +8,7 @@
 *.session-journal
 
 # Memory persistence file
-fusion_jarvis_memory.json
+fluxclaw_memory.json
 
 # Log files
 *.log

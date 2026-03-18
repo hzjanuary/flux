@@ -1,6 +1,6 @@
 <div align="center">
 
-# FluxClaw (Fusion-Jarvis)
+# FluxClaw
 
 **A personal AI Agent on Telegram — Powered by OpenRouter**
 
@@ -73,7 +73,7 @@ Memory operates on **2 tiers**:
 | Tier 2 | Core Context (LTM) | LLM-generated summary of older history, injected into every System Prompt |
 
 When STM is full, the LLM automatically summarizes the older half and stores it in Core Context.
-All memory is saved to `fusion_jarvis_memory.json` and **persists across restarts**.
+All memory is saved to `fluxclaw_memory.json` and **persists across restarts**.
 
 ---
 

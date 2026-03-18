@@ -30,7 +30,7 @@ from config import cfg
 logger = logging.getLogger(__name__)
 
 # Path to persist memory to disk
-MEMORY_FILE = "fusion_jarvis_memory.json"
+MEMORY_FILE = "fluxclaw_memory.json"
 
 
 @dataclass

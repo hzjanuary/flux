@@ -1,5 +1,5 @@
 """
-bot.py — Fusion-Jarvis Telegram Interface
+bot.py — FluxClaw Telegram Interface
 ==========================================
 The main entry point. Creates the Telethon client, registers event handlers,
 and manages the event loop.
@@ -41,7 +41,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("fusion_jarvis.log", encoding="utf-8"),
+        logging.FileHandler("fluxclaw.log", encoding="utf-8"),
     ],
 )
 logger = logging.getLogger(__name__)

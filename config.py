@@ -1,5 +1,5 @@
 """
-config.py — Fusion-Jarvis Configuration Center
+config.py — FluxClaw Configuration Center
 ================================================
 Manages all API keys and environment variables using python-dotenv.
 All sensitive credentials are loaded from a .env file and NEVER hardcoded.
@@ -77,7 +77,7 @@ class Config:
 
     # ── Agent Identity ────────────────────────────────────────────────────────
     AGENT_NAME: str = field(
-        default_factory=lambda: os.environ.get("AGENT_NAME", "Fusion-Jarvis")
+        default_factory=lambda: os.environ.get("AGENT_NAME", "FluxClaw")
     )
     AGENT_LANGUAGE: str = field(
         default_factory=lambda: os.environ.get("AGENT_LANGUAGE", "Vietnamese/English")
@@ -86,7 +86,7 @@ class Config:
     # ── Session File ─────────────────────────────────────────────────────────
     # Telethon saves session data here to avoid re-login on every restart
     SESSION_NAME: str = field(
-        default_factory=lambda: os.environ.get("SESSION_NAME", "fusion_jarvis_session")
+        default_factory=lambda: os.environ.get("SESSION_NAME", "fluxclaw_session")
     )
 
 
@@ -96,7 +96,7 @@ cfg = Config()
 
 
 # ── System Prompt Template ────────────────────────────────────────────────────
-# This is the "soul" of Fusion-Jarvis, injected into every LLM request.
+# This is the "soul" of FluxClaw, injected into every LLM request.
 # {core_context} will be replaced dynamically by the Lambda Memory system.
 SYSTEM_PROMPT_TEMPLATE = """
 Bạn là {agent_name} — một AI Assistant thông minh, mạnh mẽ và thân thiện.

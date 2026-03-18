@@ -1,4 +1,4 @@
-# Fusion-Jarvis — Python Dependencies
+# FluxClaw — Python Dependencies
 # Install with: pip install -r requirements.txt
 
 # ── Telegram Client ──────────────────────────────────────────

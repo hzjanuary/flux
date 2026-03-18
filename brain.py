@@ -1,5 +1,5 @@
 """
-brain.py — Fusion-Jarvis Reasoning Engine
+brain.py — FluxClaw Reasoning Engine
 ==========================================
 Integrates OpenRouter API and implements the full ReAct (Reasoning + Acting) loop.
 
@@ -34,7 +34,7 @@ MAX_TOOL_ITERATIONS = 5
 
 class Brain:
     """
-    The reasoning engine of Fusion-Jarvis.
+    The reasoning engine of FluxClaw.
 
     Responsibilities:
         - Maintain the AsyncOpenAI client (OpenRouter-compatible)
@@ -198,7 +198,7 @@ class Brain:
                 temperature=0.7,
                 # OpenRouter-specific headers (for rankings/attribution)
                 extra_headers={
-                    "HTTP-Referer": "https://github.com/fusion-jarvis",
+                    "HTTP-Referer": "https://github.com/fluxclaw",
                     "X-Title": cfg.AGENT_NAME,
                 },
             )
