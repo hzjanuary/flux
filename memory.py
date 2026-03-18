@@ -23,7 +23,7 @@ from collections import deque
 from dataclasses import asdict, dataclass, field
 from typing import Deque, Dict, List, Optional
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from config import cfg
 
@@ -106,15 +106,16 @@ class LambdaMemory:
         """
         return [msg.to_dict() for msg in self.short_term]
 
-    async def maybe_summarize(self, openai_client: OpenAI):
+    async def maybe_summarize(self, openai_client: AsyncOpenAI):
         """
         Check if short-term memory is full. If so, summarize the oldest
         half of messages and merge the summary into core_context.
 
         This is the key "Lambda" trigger — called after every turn.
+        Fully async: does NOT block the event loop while awaiting the LLM.
 
         Args:
-            openai_client: The initialized OpenAI-compatible client.
+            openai_client: The shared AsyncOpenAI client from Brain.
         """
         if len(self.short_term) < cfg.SHORT_TERM_LIMIT:
             return  # Not full yet, nothing to do
@@ -148,7 +149,8 @@ class LambdaMemory:
         )
 
         try:
-            response = openai_client.chat.completions.create(
+            # ✅ Fully async — does not block the event loop
+            response = await openai_client.chat.completions.create(
                 model=cfg.SUMMARIZER_MODEL,
                 messages=[{"role": "user", "content": summarize_prompt}],
                 max_tokens=512,
@@ -158,7 +160,7 @@ class LambdaMemory:
             logger.info("[Memory] Summarization complete. Core context updated.")
         except Exception as e:
             logger.error("[Memory] Summarization failed: %s", e)
-            # On failure, just retain the old core_context — graceful degradation
+            # On failure, retain the old core_context — graceful degradation
 
         # Replace STM with only the newer half (the older half was summarized)
         self.short_term = deque(to_keep, maxlen=cfg.SHORT_TERM_LIMIT)

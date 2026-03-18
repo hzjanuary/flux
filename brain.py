@@ -79,14 +79,9 @@ class Brain:
         # Step 3: Store the final AI response in memory
         memory.add_message("assistant", final_response)
 
-        # Step 4: Check if we should summarize (async, non-blocking conceptually)
-        # We use a sync OpenAI client here for the summarizer within async context
-        from openai import OpenAI
-        sync_client = OpenAI(
-            api_key=cfg.OPENROUTER_API_KEY,
-            base_url=cfg.OPENROUTER_BASE_URL,
-        )
-        await memory.maybe_summarize(sync_client)
+        # Step 4: Async summarization check — reuse the shared AsyncOpenAI client,
+        # no extra client creation, no blocking of the event loop.
+        await memory.maybe_summarize(self.client)
 
         return final_response
 

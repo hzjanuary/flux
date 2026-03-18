@@ -1,20 +1,20 @@
 # FluxClaw — Python Dependencies
 # Install with: pip install -r requirements.txt
 
-# ── Telegram Client ──────────────────────────────────────────
+# -- Telegram Client --------------------------------------------------
 telethon>=1.36.0
 
-# ── OpenRouter / OpenAI-compatible SDK ───────────────────────
+# -- OpenRouter / OpenAI-compatible SDK -------------------------------
 openai>=1.30.0
 
-# ── Environment / Configuration ──────────────────────────────
+# -- Environment / Configuration --------------------------------------
 python-dotenv>=1.0.0
 
-# ── System Info Tool ─────────────────────────────────────────
+# -- System Info Tool -------------------------------------------------
 psutil>=5.9.0
 
-# ── Web Search Tool (async HTTP) ────────────────────────────
-httpx>=0.27.0
+# -- Web Search Tool --------------------------------------------------
+duckduckgo-search>=6.2.0
 
-# ── Async support (built into Python 3.8+, but listed for clarity) ──
+# -- Async support (built into Python 3.8+, listed for clarity) -------
 # asyncio is part of stdlib — no install needed

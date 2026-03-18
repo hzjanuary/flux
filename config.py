@@ -32,9 +32,13 @@ class Config:
     TELEGRAM_API_HASH: str = field(
         default_factory=lambda: os.environ["TELEGRAM_API_HASH"]
     )
-    # Your personal Telegram phone number (or bot token if using Bot API)
+    # Phone number — only used in UserBot mode (leave empty when using Bot Token)
     TELEGRAM_PHONE: str = field(
         default_factory=lambda: os.environ.get("TELEGRAM_PHONE", "")
+    )
+    # Bot Token from @BotFather — used instead of phone number for Bot API mode
+    TELEGRAM_BOT_TOKEN: str = field(
+        default_factory=lambda: os.environ.get("TELEGRAM_BOT_TOKEN", "")
     )
     # Optional: restrict the bot to only respond to messages from this user ID
     TELEGRAM_OWNER_ID: int = field(

@@ -66,14 +66,30 @@ async def send_typing(chat_id: int):
 
 
 # ── Helper: Check if message is from owner (optional security) ────────────────
+
+# Warn once at import time if running in public / unprotected mode
+if cfg.TELEGRAM_OWNER_ID == 0:
+    logger.warning(
+        "[Security] TELEGRAM_OWNER_ID is 0 — bot is running in PUBLIC mode. "
+        "Anyone can interact with it and consume your OpenRouter API quota. "
+        "Set TELEGRAM_OWNER_ID in .env to restrict access to yourself only."
+    )
+
+
 def is_authorized(event) -> bool:
     """
     Returns True if TELEGRAM_OWNER_ID is 0 (public bot) or
-    if the message sender matches the owner ID.
+    if the message sender matches the configured owner ID.
     """
     if cfg.TELEGRAM_OWNER_ID == 0:
         return True  # No restriction — respond to everyone
-    return event.sender_id == cfg.TELEGRAM_OWNER_ID
+    if event.sender_id != cfg.TELEGRAM_OWNER_ID:
+        logger.warning(
+            "[Security] Blocked message from unauthorized user ID: %s",
+            event.sender_id,
+        )
+        return False
+    return True
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -232,21 +248,30 @@ async def handle_message(event):
 
 async def main():
     """
-    Start the Telethon client and begin listening for messages.
-    On first run, Telethon will prompt for your phone number and OTP.
+    Start the Telethon client in Bot API mode using a Bot Token from @BotFather.
+    No phone number or OTP is required — simply set TELEGRAM_BOT_TOKEN in .env.
     """
+    # ── Pre-flight check ──────────────────────────────────────────────────────
+    if not cfg.TELEGRAM_BOT_TOKEN:
+        logger.critical(
+            "[Bot] TELEGRAM_BOT_TOKEN is not set! "
+            "Please add it to your .env file and restart."
+        )
+        return
+
     logger.info("=" * 60)
-    logger.info("  %s — Starting Up", cfg.AGENT_NAME)
-    logger.info("  Model: %s", cfg.DEFAULT_MODEL)
-    logger.info("  Memory limit: %d messages per chat", cfg.SHORT_TERM_LIMIT)
-    logger.info("  Tools: %s", ", ".join(registry.list_tools()))
+    logger.info("  %s — Starting Up (Bot API Mode)", cfg.AGENT_NAME)
+    logger.info("  Model     : %s", cfg.DEFAULT_MODEL)
+    logger.info("  Memory    : %d messages per chat", cfg.SHORT_TERM_LIMIT)
+    logger.info("  Tools     : %s", ", ".join(registry.list_tools()))
     logger.info("=" * 60)
 
-    await client.start(phone=cfg.TELEGRAM_PHONE)
+    # ── Connect via Bot Token (no phone / OTP needed) ─────────────────────────
+    await client.start(bot_token=cfg.TELEGRAM_BOT_TOKEN)
 
     me = await client.get_me()
     logger.info(
-        "[Bot] Logged in as: %s (@%s) [ID: %s]",
+        "[Bot] Authenticated as: %s (@%s) [ID: %s]",
         me.first_name, me.username, me.id
     )
 
@@ -255,8 +280,8 @@ async def main():
     else:
         logger.info("[Bot] Running in PUBLIC mode (responding to all users).")
 
-    print(f"\n✅ {cfg.AGENT_NAME} is online and listening for messages...")
-    print("   Press Ctrl+C to stop.\n")
+    print(f"\n✅ {cfg.AGENT_NAME} (@{me.username}) is online and listening...")
+    print("   Mode: Bot API  |  Press Ctrl+C to stop.\n")
 
     # Keep the client running until manually stopped
     await client.run_until_disconnected()

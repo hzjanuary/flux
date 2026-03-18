@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Callable, Coroutine, Dict, List, Optional
 
 import psutil  # For system info (pip install psutil)
-import httpx   # For web search (pip install httpx)
+from duckduckgo_search import DDGS  # For web search (pip install duckduckgo-search)
 
 logger = logging.getLogger(__name__)
 
@@ -218,51 +218,41 @@ async def get_current_time() -> str:
 )
 async def search_web(query: str, max_results: int = 5) -> str:
     """
-    Searches DuckDuckGo Instant Answer API for information.
-    Falls back to a link-based result if no instant answer is found.
+    Searches the web via DuckDuckGo using the duckduckgo_search library.
+    Returns real search results: title, URL, and a content snippet per result.
     """
     max_results = min(max_results, 10)
-    search_url = "https://api.duckduckgo.com/"
-    params = {
-        "q": query,
-        "format": "json",
-        "no_html": "1",
-        "skip_disambig": "1",
-    }
 
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(search_url, params=params)
-            response.raise_for_status()
-            data = response.json()
-
-        results = []
-
-        # Try to get the abstract (best single answer)
-        if data.get("AbstractText"):
-            results.append(
-                f"📌 **Summary**: {data['AbstractText']}\n"
-                f"   Source: {data.get('AbstractURL', 'N/A')}"
+        async with DDGS() as ddgs:
+            raw_results = await ddgs.atext(
+                query,
+                max_results=max_results,
             )
 
-        # Get related topics
-        for topic in data.get("RelatedTopics", [])[:max_results]:
-            if isinstance(topic, dict) and topic.get("Text"):
-                results.append(
-                    f"• {topic['Text']}\n  🔗 {topic.get('FirstURL', '')}"
-                )
-
-        if not results:
+        if not raw_results:
             return (
-                f"🔍 No instant results for '{query}'. "
+                f"🔍 No results found for '{query}'. "
                 f"Try: https://duckduckgo.com/?q={query.replace(' ', '+')}"
             )
 
-        return f"🔍 **Search: '{query}'**\n\n" + "\n\n".join(results)
+        lines = [f"🔍 **Search results for: '{query}'**\n"]
+        for i, result in enumerate(raw_results, start=1):
+            title = result.get("title", "No title")
+            href  = result.get("href", "")
+            body  = result.get("body", "").strip()
+            # Truncate long snippets to keep the prompt concise
+            snippet = body[:300] + "…" if len(body) > 300 else body
+            lines.append(
+                f"{i}. **{title}**\n"
+                f"   🔗 {href}\n"
+                f"   {snippet}"
+            )
 
-    except httpx.TimeoutException:
-        return f"❌ Search timed out for query: '{query}'"
+        return "\n\n".join(lines)
+
     except Exception as e:
+        logger.error("[search_web] Failed: %s", e)
         return f"❌ Search failed: {type(e).__name__}: {e}"
 
 
