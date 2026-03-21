@@ -21,15 +21,25 @@ import logging
 import os
 import platform
 import subprocess
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Coroutine, Dict, List, Optional
 
 import psutil  # For system info (pip install psutil)
-from duckduckgo_search import DDGS  # For web search (pip install duckduckgo-search)
+try:
+    # New package name (recommended)
+    from ddgs import DDGS  # type: ignore
+except ImportError:
+    # Backward-compatible fallback for existing environments
+    from duckduckgo_search import DDGS
 
 logger = logging.getLogger(__name__)
+
+# Small in-process cache to speed up repeated web searches.
+_SEARCH_CACHE: Dict[tuple, tuple] = {}
+_SEARCH_CACHE_TTL_SEC = 180
 
 
 # ── Tool Metadata ──────────────────────────────────────────────────────────────
@@ -224,6 +234,13 @@ async def search_web(query: str, max_results: int = 5) -> str:
     Returns real search results: title, URL, and a content snippet per result.
     """
     max_results = min(max_results, 10)
+    normalized_query = query.strip().lower()
+    cache_key = (normalized_query, max_results)
+    cached = _SEARCH_CACHE.get(cache_key)
+    now_ts = time.time()
+    if cached and now_ts - cached[0] < _SEARCH_CACHE_TTL_SEC:
+        logger.info("[search_web] Cache hit for query='%s'", normalized_query[:80])
+        return cached[1]
 
     def _blocking_search() -> list:
         """Synchronous search — safe to run inside an executor thread."""
@@ -231,7 +248,7 @@ async def search_web(query: str, max_results: int = 5) -> str:
             return ddgs.text(query, max_results=max_results)
 
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         raw_results = await loop.run_in_executor(None, _blocking_search)
 
         if not raw_results:
@@ -253,7 +270,9 @@ async def search_web(query: str, max_results: int = 5) -> str:
                 f"   {snippet}"
             )
 
-        return "\n\n".join(lines)
+        rendered = "\n\n".join(lines)
+        _SEARCH_CACHE[cache_key] = (now_ts, rendered)
+        return rendered
 
     except Exception as e:
         logger.error("[search_web] Failed: %s", e)

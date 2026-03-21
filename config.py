@@ -11,6 +11,7 @@ Usage:
 
 import os
 from dataclasses import dataclass, field
+from typing import Tuple
 from dotenv import load_dotenv
 
 # Load .env file from the project root directory
@@ -60,6 +61,15 @@ class Config:
     DEFAULT_MODEL: str = field(
         default_factory=lambda: os.environ.get(
             "DEFAULT_MODEL", "meta-llama/llama-3.3-70b-instruct:free"
+        )
+    )
+    # Ordered fallback models, comma-separated in .env
+    # Example: "google/gemini-2.0-flash-001,meta-llama/llama-3.1-8b-instruct:free"
+    FALLBACK_MODELS: Tuple[str, ...] = field(
+        default_factory=lambda: tuple(
+            m.strip()
+            for m in os.environ.get("FALLBACK_MODELS", "google/gemini-2.0-flash-001").split(",")
+            if m.strip()
         )
     )
     # Model used exclusively for summarizing memory (can be a cheaper/faster model)

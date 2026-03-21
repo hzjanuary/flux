@@ -19,6 +19,7 @@ Persistence:
 import json
 import logging
 import os
+import asyncio
 from collections import deque
 from dataclasses import asdict, dataclass, field
 from typing import Deque, Dict, List, Optional
@@ -77,6 +78,7 @@ class LambdaMemory:
         self.chat_id = chat_id
         self.short_term: Deque[Message] = deque(maxlen=cfg.SHORT_TERM_LIMIT)
         self.core_context: str = ""  # Long-term summary
+        self._summary_lock = asyncio.Lock()
         self._load_from_disk()
 
     # ── Public API ─────────────────────────────────────────────────────────────
@@ -120,51 +122,56 @@ class LambdaMemory:
         if len(self.short_term) < cfg.SHORT_TERM_LIMIT:
             return  # Not full yet, nothing to do
 
-        logger.info(
-            "[Memory] STM full (%d msgs) for chat %d. Triggering summarization...",
-            cfg.SHORT_TERM_LIMIT, self.chat_id
-        )
+        async with self._summary_lock:
+            # Re-check after lock acquisition because another task may have summarized already.
+            if len(self.short_term) < cfg.SHORT_TERM_LIMIT:
+                return
 
-        # Take the OLDEST half to summarize, keep the NEWEST half in STM
-        all_messages = list(self.short_term)
-        half = len(all_messages) // 2
-        to_summarize = all_messages[:half]
-        to_keep = all_messages[half:]
-
-        # Build the conversation text for summarization
-        conversation_text = "\n".join(
-            f"[{m.role.upper()}]: {m.content}" for m in to_summarize
-        )
-
-        # Compose the summarizer prompt
-        summarize_prompt = (
-            f"Đây là đoạn hội thoại cần tóm tắt:\n\n{conversation_text}\n\n"
-            f"Context hiện tại:\n{self.core_context}\n\n"
-            "Hãy tóm tắt ngắn gọn những điểm quan trọng nhất: các facts được đề cập, "
-            "quyết định của user, và bất kỳ ngữ cảnh nào cần nhớ. "
-            "Viết bằng ngôn ngữ mà user đang dùng (Việt/Anh).\n\n"
-            "---\n"
-            "Summarize the key facts, user decisions, and important context from this "
-            "conversation. Be concise. Merge with or update the existing context above."
-        )
-
-        try:
-            # ✅ Fully async — does not block the event loop
-            response = await openai_client.chat.completions.create(
-                model=cfg.SUMMARIZER_MODEL,
-                messages=[{"role": "user", "content": summarize_prompt}],
-                max_tokens=512,
+            logger.info(
+                "[Memory] STM full (%d msgs) for chat %d. Triggering summarization...",
+                cfg.SHORT_TERM_LIMIT, self.chat_id
             )
-            new_summary = response.choices[0].message.content.strip()
-            self.core_context = new_summary
-            logger.info("[Memory] Summarization complete. Core context updated.")
-        except Exception as e:
-            logger.error("[Memory] Summarization failed: %s", e)
-            # On failure, retain the old core_context — graceful degradation
 
-        # Replace STM with only the newer half (the older half was summarized)
-        self.short_term = deque(to_keep, maxlen=cfg.SHORT_TERM_LIMIT)
-        self._save_to_disk()
+            # Take the OLDEST half to summarize, keep the NEWEST half in STM
+            all_messages = list(self.short_term)
+            half = len(all_messages) // 2
+            to_summarize = all_messages[:half]
+            to_keep = all_messages[half:]
+
+            # Build the conversation text for summarization
+            conversation_text = "\n".join(
+                f"[{m.role.upper()}]: {m.content}" for m in to_summarize
+            )
+
+            # Compose the summarizer prompt
+            summarize_prompt = (
+                f"Đây là đoạn hội thoại cần tóm tắt:\n\n{conversation_text}\n\n"
+                f"Context hiện tại:\n{self.core_context}\n\n"
+                "Hãy tóm tắt ngắn gọn những điểm quan trọng nhất: các facts được đề cập, "
+                "quyết định của user, và bất kỳ ngữ cảnh nào cần nhớ. "
+                "Viết bằng ngôn ngữ mà user đang dùng (Việt/Anh).\n\n"
+                "---\n"
+                "Summarize the key facts, user decisions, and important context from this "
+                "conversation. Be concise. Merge with or update the existing context above."
+            )
+
+            try:
+                # ✅ Fully async — does not block the event loop
+                response = await openai_client.chat.completions.create(
+                    model=cfg.SUMMARIZER_MODEL,
+                    messages=[{"role": "user", "content": summarize_prompt}],
+                    max_tokens=512,
+                )
+                new_summary = response.choices[0].message.content.strip()
+                self.core_context = new_summary
+                logger.info("[Memory] Summarization complete. Core context updated.")
+            except Exception as e:
+                logger.error("[Memory] Summarization failed: %s", e)
+                # On failure, retain the old core_context — graceful degradation
+
+            # Replace STM with only the newer half (the older half was summarized)
+            self.short_term = deque(to_keep, maxlen=cfg.SHORT_TERM_LIMIT)
+            self._save_to_disk()
 
     def get_core_context_block(self) -> str:
         """

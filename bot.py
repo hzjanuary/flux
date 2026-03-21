@@ -131,6 +131,7 @@ async def handle_help(event):
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"💬 Bạn không cần gọi tool trực tiếp — chỉ cần mô tả yêu cầu bằng ngôn ngữ tự nhiên!\n"
         f"You don't need to call tools directly — just describe your request naturally!\n\n"
+        f"📈 Xem hiệu năng realtime: `/status latency`\n\n"
         f"**Ví dụ / Examples:**\n"
         f"• \"Máy tính của tôi đang dùng bao nhiêu RAM?\"\n"
         f"• \"Search for Python async best practices\"\n"
@@ -147,6 +148,11 @@ async def handle_status(event):
         return
 
     chat_id = event.chat_id
+    raw_text = (event.raw_text or "").strip().lower()
+    if "latency" in raw_text:
+        await event.reply(brain.get_latency_report(chat_id))
+        return
+
     memory = memory_manager.get(chat_id)
     stm_count = len(memory.short_term)
     has_core = bool(memory.core_context)

@@ -14,7 +14,7 @@ python-dotenv>=1.0.0
 psutil>=5.9.0
 
 # -- Web Search Tool --------------------------------------------------
-duckduckgo-search>=6.2.0
+ddgs>=8.0.0
 
 # -- Async support (built into Python 3.8+, listed for clarity) -------
 # asyncio is part of stdlib — no install needed

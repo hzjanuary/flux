@@ -164,6 +164,7 @@ No OTP or phone number required. The bot connects immediately using the Bot Toke
 | `/start` | Welcome message and introduction |
 | `/help` | List all available tools |
 | `/status` | View memory state (STM count + Core Context preview) |
+| `/status latency` | View real-time latency metrics (LLM/tool/total) |
 | `/reset` | Clear all memory for the current chat |
 
 ---
@@ -212,6 +213,7 @@ Done. The tool is **automatically** included in the system prompt and available 
 | `TELEGRAM_PHONE` | No | `""` | Phone number (UserBot mode only, unused by default) |
 | `TELEGRAM_OWNER_ID` | No | `0` (public) | Restrict bot to a single Telegram User ID |
 | `DEFAULT_MODEL` | No | `meta-llama/llama-3.3-70b-instruct:free` | Primary LLM model |
+| `FALLBACK_MODELS` | No | `google/gemini-2.0-flash-001` | Comma-separated fallback models used on 429/404 |
 | `SUMMARIZER_MODEL` | No | `google/gemini-2.0-flash-001` | Memory summarization model |
 | `MAX_TOKENS` | No | `2048` | Maximum response token limit |
 | `SHORT_TERM_LIMIT` | No | `10` | Max messages in short-term memory before summarization |
@@ -228,7 +230,7 @@ Done. The tool is **automatically** included in the system prompt and available 
 | [openai](https://github.com/openai/openai-python) | OpenRouter-compatible async LLM SDK |
 | [python-dotenv](https://github.com/theskumar/python-dotenv) | Load environment variables from `.env` |
 | [psutil](https://github.com/giampaolo/psutil) | System information (CPU, RAM, disk) |
-| [duckduckgo-search](https://github.com/deedy5/duckduckgo_search) | Web search via DuckDuckGo (runs in thread pool, non-blocking) |
+| [ddgs](https://pypi.org/project/ddgs/) | Web search via DuckDuckGo/Bing backend (runs in thread pool, non-blocking) |
 
 ---
 
